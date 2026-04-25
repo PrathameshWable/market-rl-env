@@ -18,10 +18,22 @@ dev = [
     "pytest==8.3.4",
     "pytest-cov==6.0.0",
 ]
+# Pulled in only by the Colab training notebook and `training/generate_sft_data.py`.
+# Kept out of the runtime install so the HF Space image stays slim.
+# Versions are floors, not pins — Colab re-pins these on its own.
+training = [
+    "unsloth>=2024.10",
+    "trl>=0.13.0",
+    "peft>=0.13.0",
+    "datasets>=3.0",
+    "wandb>=0.18",
+    "matplotlib>=3.9",
+    "nbformat>=5.10",
+]
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["market_env*", "client*"]
+include = ["market_env*", "client*", "training*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
