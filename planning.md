@@ -1,5 +1,36 @@
 # Planning Notes — Multi-Agent Market RL Environment
 # OpenEnv Hackathon Round 2
+# **REVISED April 25 2026 — 18-hour sprint mode**
+
+---
+
+## 0. 18-Hour Sprint — What's Cut, What's In
+
+**Context:** Submission form opens April 26. 18 hours remain. See milestone.md for the
+hour-by-hour execution plan. This section records architectural decisions made under time
+pressure so future readers understand why certain things are missing.
+
+### What we're shipping (non-negotiable)
+- ✅ M1–M4: Full env stack (order book, scenario gen, FastAPI, HF Space deployed)
+- ✅ M5: Colab notebook + SFT warm-start + GRPO Stage 1 (running right now)
+- 🔜 M6 (simplified): 10-scenario eval, 3 metrics (P&L, participation, parse rate) — no statistical tests
+- 🔜 M8 (minimal): blog.md + README with all 4 required submission URLs
+
+### What's explicitly cut (time — not worth it for judging delta)
+| Cut item | Original plan | Reason |
+|----------|--------------|--------|
+| ToM probes (M6) | Linear probe on hidden states | Need Stage 2 data to be meaningful; mention as future work |
+| Stage 2 self-play (M7) | Population-based training | Requires 20+ hours of compute we don't have |
+| Ablations (M7B) | 1.5B vs 3B, curriculum on/off | Need multiple training runs; skip |
+| Gradio UI | Interactive demo in Space | Blog + reward curve is sufficient for judges |
+| Statistical significance | Mann-Whitney U, bootstrap CI | 10 scenarios not enough; would be misleading to run |
+| Full 50-scenario eval | Per original M6 plan | 10 is enough to show directional signal |
+
+### What judges will see
+- A deployed, working environment with full test coverage
+- A Colab notebook that visibly ran (reward curve shows training happened)
+- A blog post explaining the thesis, environment, and results
+- Eval numbers (even if small N) showing the trained model beats random on P&L
 
 ---
 
