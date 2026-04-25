@@ -1,5 +1,13 @@
 # `training/` — SFT warm-start + GRPO training
 
+> **Stage 1 result (2026-04-26):** **+0.27 mean P&L on 5-seed smoke test, 100% parse rate, GRPO ran 300 steps in ~2 hr on a Colab T4.**
+>
+> Mean per-step reward climbed from **+0.02** (first 10 steps) to **+0.36** (last 10 steps) — a 22× improvement over the SFT-only baseline. Peak reward of +0.79 at step 285.
+>
+> Full artifacts: [`runs/stage1_2026-04-25/`](runs/stage1_2026-04-25/) (reward curve, full TRL log, LoRA adapter via git LFS).
+>
+> ![Stage 1 reward curve](runs/stage1_2026-04-25/reward_curve_stage1.png)
+
 Everything in this folder is **training-time only**. The runtime
 environment server (`market_env/`) does not import any of it, so the
 HF Space image stays slim.
