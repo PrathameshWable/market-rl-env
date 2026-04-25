@@ -38,6 +38,42 @@ Splitting the logic out of the notebook into this package means:
   place** — guaranteeing SFT and GRPO see the same prompts. (Tiny
   drifts here are the most common cause of GRPO collapse.)
 
+## M6 — Evaluation + Theory-of-Mind Probes
+
+Two scripts live here:
+
+- **`evaluate.py`** — runs a policy on the held-out scenario set
+  (seeds 100–109, medium difficulty, default 4-bot opponents) and reports
+  mean P&L, participation rate, and parse rate. CLI for scripted policies
+  (`--policy random|hold`); programmatic API for the LLM (called from
+  the Colab cell, since the model lives on the GPU).
+
+- **`tom_probes.py`** — three measurements designed to test the
+  *theory-of-mind* claim from the project thesis. Each probe targets a
+  different aspect of "does the agent infer from others?":
+
+  | Probe | What it measures | Chance / floor | Pass threshold |
+  |-------|------------------|----------------|----------------|
+  | 1. Price efficiency  | Mean \|mid_price − true_value\| over turns. Lower = the agent's information is moving prices toward the truth. | hold ≈ $3.06 | trained < random |
+  | 2. Signal alignment  | When private signals say "above $50", does the agent buy? When they say "below", does it sell? | random ≈ 50% | trained > 60% |
+  | 3. Direction inference | Strip the trainable agent's signals from the prompt and ask "is true_value above or below $50?" — pure inference from order flow. | 50% (chance) | trained > 60% |
+
+  Probes 1 and 2 run on any policy, including locally with `python -m
+  training.tom_probes`. Probe 3 needs the LLM and is invoked from the
+  Colab eval cell (`notebooks/eval_cell.py`).
+
+**Baseline numbers (from running `python -m training.tom_probes`):**
+
+| Policy | Probe 1 — final \|mid−tv\| | Probe 2 — alignment |
+|--------|----------------------------|---------------------|
+| hold (no trades)        | $3.06 | 0% (no actions)    |
+| RandomBot               | $2.88 | 42%                |
+| Informed oracle (cheats)| $2.40 | 100%               |
+
+The trained model results live in
+[`runs/stage1_2026-04-25/`](runs/stage1_2026-04-25/) and are populated by
+the Colab eval cell.
+
 ## Reward design (per-action oracle, used in GRPO cell)
 
 Full episode rollouts inside GRPO are expensive (50 turns × per-token
