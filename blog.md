@@ -128,6 +128,6 @@ The core claim stands: **a profit signal alone, in an information-asymmetric mar
 
 - **HF Space (live environment):** https://huggingface.co/spaces/Prathamesh0292/market-rl-env
 - **Trained adapter on HF Hub:** https://huggingface.co/Prathamesh0292/market-rl-stage1
-- **Code repository:** https://github.com/PrathameshWable/Meta_ROUND2
+- **Code repository:** https://github.com/PrathameshWable/market-rl-env
 - **Colab training notebook:** *(add public link here — File → Share → Anyone with link)*
 - **All evaluation artifacts:** [`training/runs/stage1_2026-04-25/`](training/runs/stage1_2026-04-25/)

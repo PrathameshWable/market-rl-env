@@ -28,7 +28,7 @@ import os, sys, subprocess
 REPO_DIR = "/content/Meta_ROUND2"
 if not os.path.isdir(REPO_DIR):
     subprocess.check_call(["git", "clone",
-        "https://github.com/PrathameshWable/Meta_ROUND2.git", REPO_DIR])
+        "https://github.com/PrathameshWable/market-rl-env.git", REPO_DIR])
 
 os.chdir(REPO_DIR)
 sys.path.insert(0, REPO_DIR)
