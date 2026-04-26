@@ -1,0 +1,107 @@
+{
+  "label": "trained_stage1_aux",
+  "n_episodes": 10,
+  "seeds": [
+    100,
+    101,
+    102,
+    103,
+    104,
+    105,
+    106,
+    107,
+    108,
+    109
+  ],
+  "difficulty": "medium",
+  "bot_config": "default",
+  "mean_pnl_normalized": -0.06610876521505174,
+  "median_pnl_normalized": -0.09612313111329227,
+  "pnl_std": 0.3427240563343165,
+  "pnl_min": -0.5043940322910273,
+  "pnl_max": 0.6667285325414593,
+  "participation_rate": 1.0,
+  "parse_success_rate": 1.0,
+  "episodes": [
+    {
+      "seed": 100,
+      "pnl_normalized": -0.5043940322910273,
+      "participation_rate": 1.0,
+      "parse_success_rate": 1.0,
+      "n_turns": 50,
+      "true_value": 48.93
+    },
+    {
+      "seed": 101,
+      "pnl_normalized": -0.4108187708619623,
+      "participation_rate": 1.0,
+      "parse_success_rate": 1.0,
+      "n_turns": 50,
+      "true_value": 50.93
+    },
+    {
+      "seed": 102,
+      "pnl_normalized": -0.2385483870967758,
+      "participation_rate": 1.0,
+      "parse_success_rate": 1.0,
+      "n_turns": 50,
+      "true_value": 49.6
+    },
+    {
+      "seed": 103,
+      "pnl_normalized": -0.10766493402639107,
+      "participation_rate": 1.0,
+      "parse_success_rate": 1.0,
+      "n_turns": 50,
+      "true_value": 50.02
+    },
+    {
+      "seed": 104,
+      "pnl_normalized": 0.6667285325414593,
+      "participation_rate": 1.0,
+      "parse_success_rate": 1.0,
+      "n_turns": 50,
+      "true_value": 40.41
+    },
+    {
+      "seed": 105,
+      "pnl_normalized": 0.034383438343837,
+      "participation_rate": 1.0,
+      "parse_success_rate": 1.0,
+      "n_turns": 50,
+      "true_value": 55.55
+    },
+    {
+      "seed": 106,
+      "pnl_normalized": -0.08458132820019347,
+      "participation_rate": 1.0,
+      "parse_success_rate": 1.0,
+      "n_turns": 50,
+      "true_value": 51.95
+    },
+    {
+      "seed": 107,
+      "pnl_normalized": 0.18002435825370006,
+      "participation_rate": 1.0,
+      "parse_success_rate": 1.0,
+      "n_turns": 50,
+      "true_value": 53.37
+    },
+    {
+      "seed": 108,
+      "pnl_normalized": 0.1306239299980989,
+      "participation_rate": 1.0,
+      "parse_success_rate": 1.0,
+      "n_turns": 50,
+      "true_value": 52.57
+    },
+    {
+      "seed": 109,
+      "pnl_normalized": -0.32684045881126267,
+      "participation_rate": 1.0,
+      "parse_success_rate": 1.0,
+      "n_turns": 50,
+      "true_value": 47.95
+    }
+  ]
+}

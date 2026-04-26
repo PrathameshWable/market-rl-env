@@ -1,8 +1,20 @@
 {
   "rows": [
     {
+      "label": "aux_direction_2026-04-26",
+      "run_dir": "training\\runs\\aux_direction_2026-04-26",
+      "mean_pnl_normalized": -0.06610876521505174,
+      "pnl_std": 0.3427240563343165,
+      "parse_success_rate": 1.0,
+      "participation_rate": 1.0,
+      "probe1_improvement": 0.06149999999999878,
+      "probe2_alignment_rate": 0.8,
+      "probe3_accuracy": 0.5,
+      "probe3_n": 20
+    },
+    {
       "label": "stage1_2026-04-25",
-      "run_dir": "D:\\Meta_ROUND2\\training\\runs\\stage1_2026-04-25",
+      "run_dir": "training\\runs\\stage1_2026-04-25",
       "mean_pnl_normalized": 0.0546,
       "pnl_std": 0.2434,
       "parse_success_rate": 1.0,
@@ -14,7 +26,7 @@
     },
     {
       "label": "random_baseline",
-      "run_dir": "D:\\Meta_ROUND2\\training\\runs\\stage1_2026-04-25",
+      "run_dir": "training\\runs\\aux_direction_2026-04-26",
       "mean_pnl_normalized": -0.03492065185744682,
       "pnl_std": 0.08703917984023932,
       "parse_success_rate": 1.0,
@@ -26,7 +38,7 @@
     },
     {
       "label": "hold_baseline",
-      "run_dir": "D:\\Meta_ROUND2\\training\\runs\\stage1_2026-04-25",
+      "run_dir": "training\\runs\\aux_direction_2026-04-26",
       "mean_pnl_normalized": 0.0,
       "pnl_std": 0.0,
       "parse_success_rate": 1.0,
