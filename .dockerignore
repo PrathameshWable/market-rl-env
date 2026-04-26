@@ -45,7 +45,6 @@ docs/
 # Local docs / planning
 planning.md
 milestone.md
-blog.md
 *.pdf
 
 # Build outputs
