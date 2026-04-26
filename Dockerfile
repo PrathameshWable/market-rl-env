@@ -22,6 +22,7 @@ RUN pip install --upgrade pip \
 # Now copy the rest of the source.
 COPY market_env ./market_env
 COPY client ./client
+COPY blog.md ./blog.md
 
 # HF Spaces routes external traffic to port 7860.
 EXPOSE 7860
