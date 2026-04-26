@@ -39,9 +39,11 @@ Built for the **April 2026 OpenEnv Hackathon (Round 2)**.
 |------|-------|
 | **HF Space** (live env server) | https://huggingface.co/spaces/Prathamesh0292/market-rl-env |
 | **Code repository** | https://github.com/PrathameshWable/market-rl-env |
-| **Colab training notebook** | *(share from Colab → File → Share → paste link here)* |
-| **Blog / writeup** | *(publish blog.md to HF Blog → paste URL here)* |
+| **Colab training notebook** | *(paste public Colab URL here)* |
+| **Blog / writeup** | *(paste HF Blog URL here)* |
+| **Video** | *(paste YouTube URL here if recording)* |
 | Trained Stage 1 adapter | https://huggingface.co/Prathamesh0292/market-rl-stage1 |
+| M7B ablation adapter | https://huggingface.co/Prathamesh0292/market-rl-aux-direction |
 
 ---
 
