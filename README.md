@@ -113,9 +113,9 @@ pip install -e .[dev]
 pytest tests/ -v
 ```
 
-232 tests across the order book, scenario generator, scripted bots, reward
-function, environment, server, integration, evaluation harness, and ToM probes.
-Run in ~2 s.
+263 tests across the order book, scenario generator, scripted bots, reward
+function, environment, server, integration, evaluation harness, ToM probes,
+parser robustness (M7B-hardened), and ablation infrastructure. Run in ~2 s.
 
 ---
 
@@ -168,7 +168,8 @@ Full details: [blog.md](blog.md)
 - [x] M4 — Docker + HF Space deployment
 - [x] M5 — Colab notebook + Stage 1 GRPO training (300 steps, T4, ~3 hr)
 - [x] M6 — Evaluation harness + theory-of-mind probes (3 probes, scripted baselines)
-- [ ] M7 — Stage 2: signal-free ToM training (Probe 3 target > 65%)
+- [ ] M7B — Stage 1 polish: parser hardening done; curriculum/aux-reward ablations queued (`notebooks/train_ablation_colab.ipynb`, ~5 hr Colab)
+- [ ] M7A — Stage 2 self-play (deferred until M7B `aux_direction` lifts Probe 3 above 60%)
 - [ ] M8 — Demo + final submission polish
 
 ---

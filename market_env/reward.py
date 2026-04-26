@@ -44,6 +44,14 @@ EMPTY_ACTION_THRESHOLD: int = 30
 EMPTY_ACTION_PENALTY: float = 0.02
 PARSE_FAILURE_PENALTY: float = 0.05
 
+# Optional auxiliary reward (M7B ablation). Off by default so Stage 1 numbers
+# remain comparable. When on, awards bonus = AUX_DIRECTION_BONUS *
+# min(|sum_signals| / AUX_SIGNAL_REF, 1.0) iff sign(sum_signals) ==
+# sign(net_position). Designed to attack the "say above" bias seen in M6
+# Probe 3 by directly rewarding signal-aligned positioning.
+AUX_DIRECTION_BONUS: float = 0.10
+AUX_SIGNAL_REF: float = 5.0
+
 
 # ---------------------------------------------------------------------------
 # Per-agent running stats (mutable, owned by the environment)
@@ -72,8 +80,30 @@ class RewardBreakdown:
     position_limit_penalty: float
     empty_action_penalty: float
     parse_failure_penalty: float
-    total_unclamped: float
-    total: float                          # clamped to [-1, 1]
+    aux_direction_bonus: float = 0.0      # M7B ablation; 0.0 unless enabled
+    total_unclamped: float = 0.0
+    total: float = 0.0                    # clamped to [-1, 1]
+
+
+def _direction_alignment_bonus(
+    shares_final: int,
+    signals: dict[str, float] | None,
+    weight: float,
+) -> float:
+    """Return a bonus for net position aligned with the agent's signal sum.
+
+    Range: [0, weight]. Zero if signals empty, agent didn't trade, or
+    direction disagrees with signal sum.
+    """
+    if not signals or weight <= 0.0 or shares_final == 0:
+        return 0.0
+    signal_sum = sum(signals.values())
+    if signal_sum == 0.0:
+        return 0.0
+    if (signal_sum > 0) == (shares_final > 0):
+        magnitude = min(abs(signal_sum) / AUX_SIGNAL_REF, 1.0)
+        return weight * magnitude
+    return 0.0
 
 
 def compute_reward(
@@ -82,8 +112,15 @@ def compute_reward(
     true_value: float,
     stats: AgentStats,
     initial_cash: float = INITIAL_CASH,
+    *,
+    private_signals: dict[str, float] | None = None,
+    aux_direction_weight: float = 0.0,
 ) -> RewardBreakdown:
-    """End-of-episode reward for one agent."""
+    """End-of-episode reward for one agent.
+
+    M7B: pass `aux_direction_weight > 0` and `private_signals` to enable
+    the signal-alignment auxiliary. Defaults preserve Stage 1 behaviour.
+    """
     raw_pnl = (cash_final - initial_cash) + shares_final * true_value
 
     if true_value > 0:
@@ -113,10 +150,14 @@ def compute_reward(
         else 0.0
     )
     parse_failure_penalty = PARSE_FAILURE_PENALTY * stats.parse_failures
+    aux_direction_bonus = _direction_alignment_bonus(
+        shares_final, private_signals, aux_direction_weight,
+    )
 
     total_unclamped = (
         pnl_scaled
         + participation_bonus
+        + aux_direction_bonus
         - quote_stuffing_penalty
         - position_limit_penalty
         - empty_action_penalty
@@ -133,6 +174,7 @@ def compute_reward(
         position_limit_penalty=position_limit_penalty,
         empty_action_penalty=empty_action_penalty,
         parse_failure_penalty=parse_failure_penalty,
+        aux_direction_bonus=aux_direction_bonus,
         total_unclamped=total_unclamped,
         total=total,
     )

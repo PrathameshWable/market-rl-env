@@ -154,3 +154,65 @@ HF Hub: https://huggingface.co/Prathamesh0292/market-rl-stage1
    so the model learns to manage positions across the full episode.
 4. **Opponent modeling**: Explicitly label which bot generated each order in
    the observation so the model can condition on opponent types.
+
+---
+
+## M7B — Stage 1 polish (in progress)
+
+Rather than jumping straight to multi-agent self-play (Stage 2) on a model
+that scores at chance on Probe 3, M7B runs **two ablations** designed to
+chip away at exactly that failure mode while keeping compute under five
+hours.
+
+### Hypotheses
+
+1. **`no_curriculum`** — Stage 1 ramps difficulty (easy → mixed → full).
+   Does that schedule actually help, or would the same number of steps
+   on medium-difficulty scenarios do as well? This isolates the value of
+   the schedule itself.
+2. **`aux_direction`** — Stage 1's reward is purely P&L-driven, so
+   trading aligned with private signals is only learned indirectly. This
+   ablation adds an explicit `+0.10 * min(|signal_sum|/5, 1)` bonus when
+   the agent's net position matches the sign of its private signal sum.
+   The hypothesis: making the signal-following pressure explicit during
+   training will reduce the "say above" bias on Probe 3 *even though
+   Probe 3 itself is run with signals stripped*, because the model has
+   to learn to use signal information in a more transferable way.
+
+### Plumbing
+
+- All toggles live in `training/ablations.py` as immutable
+  `AblationConfig` dataclasses; the Colab notebook just calls
+  `get_preset(name)` and reads the fields it needs.
+- The aux reward is implemented in `market_env/reward.py` and is
+  off by default (`aux_direction_weight=0.0`) so Stage 1 numbers stay
+  bit-for-bit reproducible. Backwards compat is pinned by
+  `tests/test_ablations.py` (12 tests).
+- The parser was hardened in the same pass (`tests/test_prompts.py`
+  grew from 21 to 31 tests) to handle smart quotes, single-quoted
+  Pythonic dicts, trailing commas, unquoted keys, and numeric strings.
+  These were the failure modes seen in raw Qwen output during M5.
+- Cross-run aggregation lives in `training/results_matrix.py` and
+  `notebooks/analysis.ipynb`. After each Colab run drops three JSON
+  files into `training/runs/<preset>/`, one local command rebuilds
+  every plot and the comparison table.
+
+### Run plan (~5 hr total)
+
+1. Open `notebooks/train_ablation_colab.ipynb` in Colab.
+2. Set `PRESET_NAME = 'aux_direction'` and run all cells (~2.5 hr).
+3. Download the three result JSONs into `training/runs/aux_direction/`.
+4. (Optional, if Colab credits remain) Repeat with
+   `PRESET_NAME = 'no_curriculum'` (~2.5 hr).
+5. Locally:
+   ```bash
+   python -m training.results_matrix --runs-root training/runs \
+       --markdown training/runs/results_matrix.md
+   jupyter nbconvert --to notebook --execute notebooks/analysis.ipynb --inplace
+   ```
+
+The success criterion for `aux_direction` is **Probe 3 accuracy > 60%**
+(meaningfully above chance) **without** P&L regressing below Stage 1's
++0.055. If both hold, the writeup gets the Probe 3 fix; if not, that's
+honest evidence that Probe 3 needs the structural change planned for
+Stage 2 (signal-free GRPO episodes).

@@ -111,6 +111,70 @@ class TestParserRobustness:
         assert ok
         assert action.reasoning == "spread too wide"
 
+    # --- M7B parser hardening ---------------------------------------------
+
+    def test_smart_quotes_are_normalised(self):
+        text = '\u201caction_type\u201d: \u201chold\u201d'
+        action, ok = parse_action("{" + text + "}")
+        assert ok
+        assert action.action_type == "hold"
+
+    def test_single_quoted_pythonic_dict(self):
+        text = "{'action_type': 'hold'}"
+        action, ok = parse_action(text)
+        assert ok
+        assert action.action_type == "hold"
+
+    def test_trailing_comma_is_tolerated(self):
+        text = '{"action_type": "buy", "price": 50.5, "quantity": 5,}'
+        action, ok = parse_action(text)
+        assert ok
+        assert action.action_type == "buy"
+        assert action.quantity == 5
+
+    def test_unquoted_keys_are_tolerated(self):
+        text = '{action_type: "hold"}'
+        action, ok = parse_action(text)
+        assert ok
+        assert action.action_type == "hold"
+
+    def test_uppercase_action_type_is_normalised(self):
+        text = '{"action_type": "HOLD"}'
+        action, ok = parse_action(text)
+        assert ok
+        assert action.action_type == "hold"
+
+    def test_string_price_and_quantity_are_coerced(self):
+        text = '{"action_type": "buy", "price": "50.5", "quantity": "5"}'
+        action, ok = parse_action(text)
+        assert ok
+        assert action.price == 50.5
+        assert action.quantity == 5
+
+    def test_float_quantity_with_integer_value_is_coerced(self):
+        text = '{"action_type": "buy", "price": 50.5, "quantity": 5.0}'
+        action, ok = parse_action(text)
+        assert ok
+        assert action.quantity == 5
+
+    def test_multiple_json_blobs_picks_first_valid(self):
+        text = '{"action_type": "explode"} {"action_type": "hold"}'
+        action, ok = parse_action(text)
+        assert ok
+        assert action.action_type == "hold"
+
+    def test_reasoning_with_nested_braces_does_not_break(self):
+        text = '{"action_type": "hold", "reasoning": "saw {x} pattern"}'
+        action, ok = parse_action(text)
+        assert ok
+        assert action.action_type == "hold"
+        assert action.reasoning is not None and "{x}" in action.reasoning
+
+    def test_none_input_falls_back_to_hold(self):
+        action, ok = parse_action(None)  # type: ignore[arg-type]
+        assert not ok
+        assert action.action_type == "hold"
+
 
 # ---------------------------------------------------------------------------
 # Observation formatting: smoke test on a real env observation

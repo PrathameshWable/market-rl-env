@@ -147,30 +147,95 @@ def serialize_action(action: MarketAction) -> str:
 # Strip ```json ... ``` or ``` ... ``` wrappers if the model adds them.
 _FENCE_RE = re.compile(r"```(?:json)?\s*(.*?)\s*```", re.DOTALL)
 
+# Smart-quote / typographic-quote substitutions seen in real Qwen output.
+_QUOTE_TRANSLATION = str.maketrans({
+    "\u201c": '"',  # left double curly
+    "\u201d": '"',  # right double curly
+    "\u2018": "'",  # left single curly
+    "\u2019": "'",  # right single curly
+    "\u2032": "'",  # prime
+    "\u2033": '"',  # double prime
+    "\u00ab": '"',  # « guillemet
+    "\u00bb": '"',  # »
+})
 
-def _extract_json_block(text: str) -> Optional[str]:
-    """Pull the first balanced {...} substring out of the model output.
+# Trailing-comma cleanup: }/] preceded by an optional trailing comma + ws.
+_TRAILING_COMMA_RE = re.compile(r",\s*([}\]])")
 
-    Tolerates surrounding prose, markdown fences, and trailing commentary.
-    Returns None if no plausible JSON object is present.
-    """
+# Loose key form: action_type without quotes (some models drop them).
+_BARE_KEY_RE = re.compile(r"([{,]\s*)([A-Za-z_][A-Za-z0-9_]*)\s*:")
+
+# Single-quoted JSON object — "{'action_type': 'hold'}" style output.
+_SINGLE_QUOTE_OBJ_RE = re.compile(r"^\s*\{\s*'[^']")
+
+_ALLOWED_FIELDS = {"action_type", "price", "quantity", "order_id", "reasoning"}
+_VALID_ACTION_TYPES = {"buy", "sell", "hold", "cancel"}
+
+
+def _strip_fences(text: str) -> str:
+    """Pull JSON out of the first markdown code fence, if present."""
     fence_match = _FENCE_RE.search(text)
-    if fence_match:
-        text = fence_match.group(1)
+    return fence_match.group(1) if fence_match else text
 
-    start = text.find("{")
-    if start == -1:
-        return None
 
-    depth = 0
-    for i in range(start, len(text)):
-        ch = text[i]
-        if ch == "{":
-            depth += 1
-        elif ch == "}":
-            depth -= 1
-            if depth == 0:
-                return text[start : i + 1]
+def _find_balanced_objects(text: str) -> list[str]:
+    """Return all top-level balanced {...} substrings in `text`.
+
+    Tracks string state so braces inside strings aren't counted.
+    """
+    out: list[str] = []
+    i, n = 0, len(text)
+    while i < n:
+        if text[i] != "{":
+            i += 1
+            continue
+        depth = 0
+        in_str = False
+        esc = False
+        for j in range(i, n):
+            ch = text[j]
+            if in_str:
+                if esc:
+                    esc = False
+                elif ch == "\\":
+                    esc = True
+                elif ch == '"':
+                    in_str = False
+                continue
+            if ch == '"':
+                in_str = True
+            elif ch == "{":
+                depth += 1
+            elif ch == "}":
+                depth -= 1
+                if depth == 0:
+                    out.append(text[i : j + 1])
+                    i = j + 1
+                    break
+        else:
+            return out
+    return out
+
+
+def _coerce_to_strict_json(block: str) -> str:
+    """Best-effort fix of common LLM JSON quirks before json.loads()."""
+    fixed = block.translate(_QUOTE_TRANSLATION)
+    fixed = _TRAILING_COMMA_RE.sub(r"\1", fixed)
+    if _SINGLE_QUOTE_OBJ_RE.match(fixed):
+        fixed = fixed.replace("'", '"')
+    fixed = _BARE_KEY_RE.sub(r'\1"\2":', fixed)
+    return fixed
+
+
+def _try_load(block: str) -> Optional[dict]:
+    """json.loads() with progressive fallbacks for malformed-but-fixable output."""
+    for candidate in (block, _coerce_to_strict_json(block)):
+        try:
+            data = json.loads(candidate)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(data, dict):
+            return data
     return None
 
 
@@ -181,24 +246,54 @@ def parse_action(text: str) -> tuple[MarketAction, bool]:
     invalid fields — returns (hold, False). The caller is expected to
     increment AgentStats.parse_failures when parse_ok is False so the
     reward function can apply the parse-failure penalty.
+
+    Tolerates: markdown fences, smart quotes, single-quoted dicts, trailing
+    commas, unquoted keys, surrounding prose, multiple JSON blobs (first
+    valid wins), nested reasoning fields with embedded JSON.
     """
-    block = _extract_json_block(text)
-    if block is None:
+    if not text or not isinstance(text, str):
         return MarketAction(action_type="hold"), False
 
-    try:
-        data = json.loads(block)
-    except json.JSONDecodeError:
+    inner = _strip_fences(text)
+    candidates = _find_balanced_objects(inner)
+    if not candidates and inner is not text:
+        candidates = _find_balanced_objects(text)
+    if not candidates:
         return MarketAction(action_type="hold"), False
 
-    if not isinstance(data, dict):
-        return MarketAction(action_type="hold"), False
+    for block in candidates:
+        data = _try_load(block)
+        if data is None:
+            continue
 
-    # Drop anything Pydantic doesn't know about — keep parser permissive.
-    allowed = {"action_type", "price", "quantity", "order_id", "reasoning"}
-    cleaned = {k: v for k, v in data.items() if k in allowed}
+        action_type = data.get("action_type")
+        if isinstance(action_type, str):
+            action_type = action_type.strip().lower()
+            data["action_type"] = action_type
+        if action_type not in _VALID_ACTION_TYPES:
+            continue
 
-    try:
-        return MarketAction(**cleaned), True
-    except Exception:
-        return MarketAction(action_type="hold"), False
+        cleaned = {k: v for k, v in data.items() if k in _ALLOWED_FIELDS}
+
+        # Coerce numeric fields written as strings, e.g. "price": "50.5".
+        for key in ("price",):
+            if isinstance(cleaned.get(key), str):
+                try:
+                    cleaned[key] = float(cleaned[key])
+                except ValueError:
+                    cleaned.pop(key, None)
+        if isinstance(cleaned.get("quantity"), str):
+            try:
+                cleaned["quantity"] = int(float(cleaned["quantity"]))
+            except ValueError:
+                cleaned.pop("quantity", None)
+        if isinstance(cleaned.get("quantity"), float):
+            if cleaned["quantity"].is_integer():
+                cleaned["quantity"] = int(cleaned["quantity"])
+
+        try:
+            return MarketAction(**cleaned), True
+        except Exception:
+            continue
+
+    return MarketAction(action_type="hold"), False

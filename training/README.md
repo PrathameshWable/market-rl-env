@@ -16,9 +16,14 @@ HF Space image stays slim.
 
 | File | Purpose |
 |------|---------|
-| `prompts.py` | System prompt, observation formatter, action serializer, robust parser (always falls back to `hold` on failure) |
+| `prompts.py` | System prompt, observation formatter, action serializer, robust parser (M7B-hardened: smart quotes, single-quoted dicts, trailing commas, unquoted keys, prose+JSON mixes all parse) |
 | `rollout.py` | `run_episode(env, policy, ...)` — one loop, used by both SFT data gen and GRPO eval |
 | `curriculum.py` | Difficulty scheduler: easy 0–600, mixed 600–1500, full 1500+ |
+| `ablations.py` | M7B feature flags. `AblationConfig` + presets (`baseline_replay`, `no_curriculum`, `aux_direction`); `make_difficulty_scheduler(cfg)` |
+| `evaluate.py` | M6 eval harness: `run_evaluation(policy, ...)` for held-out P&L; CLI for `random`/`hold` baselines |
+| `tom_probes.py` | Three theory-of-mind probes (price efficiency, signal alignment, direction inference) |
+| `plots.py` | Pure-data plot helpers reused by `notebooks/analysis.ipynb` and per-run regenerators |
+| `results_matrix.py` | Walks every `runs/<name>/` folder, prints + saves a Markdown / JSON comparison table |
 | `generate_sft_data.py` | Plays `InformedBot` for 500 episodes, writes `sft_data.jsonl` (~46 MB, gitignored) |
 | `sft_data.jsonl` | Generated SFT corpus — never committed; regenerated in the Colab notebook in ~45 s |
 
@@ -73,6 +78,33 @@ Two scripts live here:
 The trained model results live in
 [`runs/stage1_2026-04-25/`](runs/stage1_2026-04-25/) and are populated by
 the Colab eval cell.
+
+## M7B — Stage 1 polish (ablations)
+
+Three runs comparable to Stage 1, each ~2.5 hr on a Colab T4. Pick any
+preset by editing `PRESET_NAME` in `notebooks/train_ablation_colab.ipynb`:
+
+| preset | curriculum | aux reward | what it tests |
+|---|---|---|---|
+| `baseline_replay` | on  | off (0.0)  | reproduce Stage 1 with the new code path |
+| `no_curriculum`   | off | off (0.0)  | does the easy→hard schedule actually help? |
+| `aux_direction`   | on  | on  (0.10) | does paying for signal-aligned trades fix the Probe 3 bias? |
+
+Each run drops six artefacts into `training/runs/<preset_name>/`:
+`eval_trained.json`, `tom_probes_trained.json`, `tom_direction_inference.json`,
+plus the GRPO checkpoint (in Drive). To regenerate every plot + the
+comparison matrix locally after a Colab run finishes:
+
+```bash
+python -m training.results_matrix --runs-root training/runs \
+    --markdown training/runs/results_matrix.md
+jupyter nbconvert --to notebook --execute notebooks/analysis.ipynb --inplace
+```
+
+The auxiliary direction reward is implemented in
+`market_env/reward.py` (off by default — `aux_direction_weight=0.0` keeps
+Stage 1 numbers exactly reproducible). See `tests/test_ablations.py` for
+the regression suite that pins the backwards-compat behaviour.
 
 ## Reward design (per-action oracle, used in GRPO cell)
 

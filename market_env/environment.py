@@ -156,10 +156,18 @@ def _list_tasks() -> list[dict[str, Any]]:
 # ---------------------------------------------------------------------------
 
 class MarketEnvironment:
-    """OpenEnv-compliant multi-agent market environment."""
+    """OpenEnv-compliant multi-agent market environment.
 
-    def __init__(self) -> None:
+    Args:
+        aux_direction_weight: M7B ablation. When >0, the trainable agent
+            also receives a signal-alignment bonus at episode end (see
+            `market_env.reward._direction_alignment_bonus`). Default 0.0
+            so Stage 1 / baseline behaviour is unchanged.
+    """
+
+    def __init__(self, *, aux_direction_weight: float = 0.0) -> None:
         self._episodes: dict[str, EpisodeState] = {}
+        self._aux_direction_weight = float(aux_direction_weight)
 
     def list_tasks(self) -> list[dict[str, Any]]:
         return _list_tasks()
@@ -389,10 +397,21 @@ class MarketEnvironment:
 
     def _finalize(self, state: EpisodeState) -> None:
         for agent_id in state.positions:
+            # Aux direction bonus only applies to the trainable agent: the
+            # ablation studies the effect on the policy under training, not
+            # the scripted opponents.
+            aux_weight = (
+                self._aux_direction_weight
+                if agent_id == state.trainable_agent_id
+                else 0.0
+            )
+            signals = state.scenario.agent_signals.get(agent_id) if aux_weight else None
             breakdown = compute_reward(
                 cash_final=state.positions[agent_id].cash,
                 shares_final=state.positions[agent_id].shares_held,
                 true_value=state.scenario.true_value,
                 stats=state.stats[agent_id],
+                private_signals=signals,
+                aux_direction_weight=aux_weight,
             )
             state.rewards[agent_id] = breakdown
