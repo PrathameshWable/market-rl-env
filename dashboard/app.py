@@ -133,19 +133,26 @@ def _fmt_pct(x, signed: bool = True) -> str:
 
 
 def _kpi(label: str, value: str, sub: str = "", delta: str = "", delta_kind: str = "pos") -> None:
-    delta_html = ""
-    if delta:
-        cls = "kpi-delta-pos" if delta_kind == "pos" else "kpi-delta-neg"
-        delta_html = f'<div class="{cls}">{delta}</div>'
+    # Use inline styles instead of CSS classes — more reliable across Streamlit versions.
+    delta_color = "#3fb950" if delta_kind == "pos" else "#f85149"
+    delta_html = (
+        f'<div style="color:{delta_color};font-size:0.85rem;font-weight:600;margin-top:0.2rem;">{delta}</div>'
+        if delta else ""
+    )
+    sub_html = (
+        f'<div style="color:#6e7681;font-size:0.78rem;margin-top:0.3rem;">{sub}</div>'
+        if sub else ""
+    )
     st.markdown(
-        f"""
-        <div class="kpi-card">
-            <div class="kpi-label">{label}</div>
-            <div class="kpi-value">{value}</div>
-            {delta_html}
-            <div class="kpi-sub">{sub}</div>
-        </div>
-        """,
+        f"""<div style="background:linear-gradient(135deg,#161b22,#1c2129);
+            padding:1.2rem 1.4rem;border-radius:12px;
+            border:1px solid rgba(255,255,255,0.06);
+            box-shadow:0 2px 12px rgba(0,0,0,0.25);min-height:90px;">
+          <div style="color:#8b949e;font-size:0.78rem;text-transform:uppercase;
+              letter-spacing:0.08em;font-weight:600;margin-bottom:0.45rem;">{label}</div>
+          <div style="color:#f0f6fc;font-size:1.8rem;font-weight:700;line-height:1.1;">{value}</div>
+          {delta_html}{sub_html}
+        </div>""",
         unsafe_allow_html=True,
     )
 
@@ -284,13 +291,14 @@ def render_overview(run):
         "hold": "#8b949e",
     }
     for label, data in evals.items():
+        if data is None:
+            continue
         eps = data.get("episodes") or []
         if eps:
             for e in eps:
                 rows.append({"policy": label, "pnl": e["pnl_normalized"]})
-        else:
-            # No per-episode breakdown — fall back to mean as a single bar.
-            rows.append({"policy": label, "pnl": data.get("mean_pnl_normalized", 0)})
+        elif data.get("mean_pnl_normalized") is not None:
+            rows.append({"policy": label, "pnl": data["mean_pnl_normalized"]})
     if rows:
         df = pd.DataFrame(rows)
         fig = go.Figure()
@@ -671,6 +679,9 @@ def render_tom(run):
         if pe is None or "mean_error_by_turn" not in pe:
             continue
         ys = pe["mean_error_by_turn"]
+        # Skip if all values are null (run had no mid-price data)
+        if all(v is None for v in ys):
+            continue
         xs = list(range(len(ys)))
         fig.add_trace(go.Scatter(
             x=xs, y=ys, mode="lines",
@@ -834,21 +845,29 @@ def render_training(run):
         f"{len(df)} log records over {df['step'].max()} GRPO steps."
     )
 
-    # KPIs over the run
+    # KPIs over the run — dropna() prevents +nan when last log entry has no reward
     c1, c2, c3, c4 = st.columns(4)
     with c1:
         _kpi("Total GRPO steps", f"{int(df['step'].max())}",
              sub=f"{len(df)} log entries")
     with c2:
-        last_reward = df["reward"].iloc[-1] if "reward" in df else 0
-        _kpi("Final reward", f"{last_reward:+.3f}", sub="last logging step")
+        if "reward" in df:
+            valid_r = df["reward"].dropna()
+            last_r = valid_r.iloc[-1] if not valid_r.empty else None
+            _kpi("Final reward", f"{last_r:+.3f}" if last_r is not None else "—",
+                 sub="last logged reward")
     with c3:
         if "completion_length" in df:
-            _kpi("Mean completion length", f"{df['completion_length'].mean():.1f} tok",
-                 sub="across the run")
+            valid_cl = df["completion_length"].dropna()
+            if not valid_cl.empty:
+                _kpi("Mean completion length", f"{valid_cl.mean():.1f} tok",
+                     sub="across the run")
     with c4:
         if "kl" in df:
-            _kpi("Final KL", f"{df['kl'].iloc[-1]:.3f}", sub="vs reference")
+            valid_kl = df["kl"].dropna()
+            last_kl = valid_kl.iloc[-1] if not valid_kl.empty else None
+            _kpi("Final KL", f"{last_kl:.3f}" if last_kl is not None else "—",
+                 sub="vs reference")
 
     # Reward + reward_std
     if "reward" in df:
