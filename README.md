@@ -37,10 +37,11 @@ Built for the **April 2026 OpenEnv Hackathon (Round 2)**.
 
 | What | Where |
 |------|-------|
-| Hugging Face Space (env server) | https://huggingface.co/spaces/Prathamesh0292/market-rl-env |
-| Trained Stage 1 adapter (HF Hub) | https://huggingface.co/Prathamesh0292/market-rl-stage1 |
-| Training blog + eval report | [blog.md](blog.md) |
-| Colab training notebook | [notebooks/train_colab.ipynb](notebooks/train_colab.ipynb) |
+| **HF Space** (live env server) | https://huggingface.co/spaces/Prathamesh0292/market-rl-env |
+| **Code repository** | https://github.com/PrathameshWable/Meta_ROUND2 |
+| **Colab training notebook** | *(share from Colab → File → Share → paste link here)* |
+| **Blog / writeup** | *(publish blog.md to HF Blog → paste URL here)* |
+| Trained Stage 1 adapter | https://huggingface.co/Prathamesh0292/market-rl-stage1 |
 
 ---
 
@@ -133,7 +134,7 @@ market_env/
   models.py         # all Pydantic request/response shapes
 client/
   client.py         # synchronous MarketClient (httpx)
-tests/              # 187 tests, ~99% coverage
+tests/              # 263 tests, ~99% coverage
 examples/
   run_episode.py    # 50-turn 5-bot smoke run
 Dockerfile          # python:3.11-slim, exposes 7860
