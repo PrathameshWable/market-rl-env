@@ -85,9 +85,32 @@ def index() -> HTMLResponse:
 
     # Minimal markdown → HTML conversion (headings, bold, code, tables, hr, links)
     import re
+
+    def _md_table_to_html(block: str) -> str:
+        lines = [l.rstrip() for l in block.strip().splitlines()]
+        rows_html: list[str] = []
+        is_header = True
+        for line in lines:
+            # Skip GFM separator rows like |---|:---:|---
+            stripped = line.replace("|", "").replace("-", "").replace(":", "").replace(" ", "")
+            if not stripped:
+                continue
+            cells = [c.strip() for c in line.strip("|").split("|")]
+            tag = "th" if is_header else "td"
+            row = "".join(f"<{tag}>{c}</{tag}>" for c in cells)
+            rows_html.append(f"<tr>{row}</tr>")
+            is_header = False
+        return "<table>" + "".join(rows_html) + "</table>"
+
     html_body = md
     # Fenced code blocks
     html_body = re.sub(r"```(?:\w+)?\n(.*?)```", lambda m: f"<pre><code>{m.group(1)}</code></pre>", html_body, flags=re.DOTALL)
+    # GFM tables — convert before paragraph wrapping so newlines are still intact
+    html_body = re.sub(
+        r"(?m)^(\|.+\|\n)+",
+        lambda m: _md_table_to_html(m.group(0)) + "\n\n",
+        html_body,
+    )
     # Inline code
     html_body = re.sub(r"`([^`]+)`", r"<code>\1</code>", html_body)
     # Images
@@ -107,11 +130,6 @@ def index() -> HTMLResponse:
     # Paragraphs (blank-line separated)
     html_body = re.sub(r"\n{2,}", "</p><p>", html_body)
     html_body = f"<p>{html_body}</p>"
-    # Tables (simple pass-through via pre-formatted CSS)
-    html_body = re.sub(r"<p>(\|.+\|)</p>", lambda m: "<table>" + re.sub(
-        r"\|([^|\n]+)", lambda c: f"<td>{c.group(1).strip()}</td>",
-        re.sub(r"^.*\|[-: ]+\|.*$", "", m.group(1), flags=re.MULTILINE)
-    ) + "</table>", html_body, flags=re.DOTALL)
 
     return HTMLResponse(content=f"""<!DOCTYPE html>
 <html lang="en">
