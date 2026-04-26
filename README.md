@@ -37,10 +37,10 @@ Built for the **April 2026 OpenEnv Hackathon (Round 2)**.
 
 | What | Where |
 |------|-------|
-| Hugging Face Space | https://huggingface.co/spaces/Prathamesh0292/market-rl-env |
-| Colab training notebook | <!-- TODO: paste public Colab share link here --> |
-| Code repository | https://huggingface.co/spaces/Prathamesh0292/market-rl-env |
-| Demo video / blog | <!-- TODO: paste YouTube or HF blog URL here --> |
+| Hugging Face Space (env server) | https://huggingface.co/spaces/Prathamesh0292/market-rl-env |
+| Trained Stage 1 adapter (HF Hub) | https://huggingface.co/Prathamesh0292/market-rl-stage1 |
+| Training blog + eval report | [blog.md](blog.md) |
+| Colab training notebook | [notebooks/train_colab.ipynb](notebooks/train_colab.ipynb) |
 
 ---
 
@@ -113,8 +113,9 @@ pip install -e .[dev]
 pytest tests/ -v
 ```
 
-187 tests across the order book, scenario generator, scripted bots, reward
-function, environment, server, and integration layers. Run in ~2 s.
+232 tests across the order book, scenario generator, scripted bots, reward
+function, environment, server, integration, evaluation harness, and ToM probes.
+Run in ~2 s.
 
 ---
 
@@ -141,16 +142,34 @@ openenv.yaml        # OpenEnv manifest
 
 ---
 
+## Stage 1 training results
+
+![GRPO reward curve](training/runs/stage1_2026-04-25/reward_curve_stage1.png)
+
+| Metric | Value |
+|--------|-------|
+| Mean reward (last 10 steps) | +0.362 (22× improvement from cold start) |
+| Mean P&L on 10 held-out scenarios | **+0.055** vs random −0.035, hold 0.000 |
+| Participation rate | 100% |
+| Parse success rate | 100% |
+| Signal alignment (Probe 2) | **80%** vs 42% random, 100% oracle |
+| Price efficiency improvement (Probe 1) | $0.65 closer to true value by episode end |
+| Direction inference / ToM (Probe 3) | 50% (chance) — Stage 2 target |
+
+Full details: [blog.md](blog.md)
+
+---
+
 ## Status
 
 - [x] M1 — Order book engine
 - [x] M2 — Scenario generator + scripted bots
 - [x] M3 — Environment + reward + FastAPI server + HTTP client
 - [x] M4 — Docker + HF Space deployment
-- [ ] M5 — Colab notebook + Stage 1 GRPO training
-- [ ] M6 — Evaluation + theory-of-mind probes
-- [ ] M7 — Stage 2 self-play (conditional) or Stage 1 polish
-- [ ] M8 — Demo + blog + final submission
+- [x] M5 — Colab notebook + Stage 1 GRPO training (300 steps, T4, ~3 hr)
+- [x] M6 — Evaluation harness + theory-of-mind probes (3 probes, scripted baselines)
+- [ ] M7 — Stage 2: signal-free ToM training (Probe 3 target > 65%)
+- [ ] M8 — Demo + final submission polish
 
 ---
 
