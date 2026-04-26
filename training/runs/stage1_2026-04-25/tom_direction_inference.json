@@ -1,0 +1,149 @@
+{
+  "label": "trained_stage1",
+  "n_probes": 20,
+  "n_correct": 10,
+  "accuracy": 0.5,
+  "chance_baseline": 0.5,
+  "probes": [
+    {
+      "seed": 200,
+      "true_value": 50.56,
+      "ground_truth": "above",
+      "model_answer": "above",
+      "correct": true
+    },
+    {
+      "seed": 201,
+      "true_value": 56.86,
+      "ground_truth": "above",
+      "model_answer": "above",
+      "correct": true
+    },
+    {
+      "seed": 202,
+      "true_value": 55.04,
+      "ground_truth": "above",
+      "model_answer": "above",
+      "correct": true
+    },
+    {
+      "seed": 203,
+      "true_value": 47.82,
+      "ground_truth": "below",
+      "model_answer": "above",
+      "correct": false
+    },
+    {
+      "seed": 204,
+      "true_value": 43.91,
+      "ground_truth": "below",
+      "model_answer": "above",
+      "correct": false
+    },
+    {
+      "seed": 205,
+      "true_value": 45.32,
+      "ground_truth": "below",
+      "model_answer": "above",
+      "correct": false
+    },
+    {
+      "seed": 206,
+      "true_value": 42.45,
+      "ground_truth": "below",
+      "model_answer": "above",
+      "correct": false
+    },
+    {
+      "seed": 207,
+      "true_value": 49.16,
+      "ground_truth": "below",
+      "model_answer": "above",
+      "correct": false
+    },
+    {
+      "seed": 208,
+      "true_value": 53.77,
+      "ground_truth": "above",
+      "model_answer": "above",
+      "correct": true
+    },
+    {
+      "seed": 209,
+      "true_value": 46.89,
+      "ground_truth": "below",
+      "model_answer": "above",
+      "correct": false
+    },
+    {
+      "seed": 210,
+      "true_value": 45.52,
+      "ground_truth": "below",
+      "model_answer": "above",
+      "correct": false
+    },
+    {
+      "seed": 211,
+      "true_value": 48.6,
+      "ground_truth": "below",
+      "model_answer": "above",
+      "correct": false
+    },
+    {
+      "seed": 212,
+      "true_value": 42.89,
+      "ground_truth": "below",
+      "model_answer": "above",
+      "correct": false
+    },
+    {
+      "seed": 213,
+      "true_value": 50.28,
+      "ground_truth": "above",
+      "model_answer": "above",
+      "correct": true
+    },
+    {
+      "seed": 214,
+      "true_value": 55.59,
+      "ground_truth": "above",
+      "model_answer": "above",
+      "correct": true
+    },
+    {
+      "seed": 215,
+      "true_value": 52.9,
+      "ground_truth": "above",
+      "model_answer": "above",
+      "correct": true
+    },
+    {
+      "seed": 216,
+      "true_value": 50.81,
+      "ground_truth": "above",
+      "model_answer": "above",
+      "correct": true
+    },
+    {
+      "seed": 217,
+      "true_value": 46.01,
+      "ground_truth": "below",
+      "model_answer": "above",
+      "correct": false
+    },
+    {
+      "seed": 218,
+      "true_value": 51.27,
+      "ground_truth": "above",
+      "model_answer": "above",
+      "correct": true
+    },
+    {
+      "seed": 219,
+      "true_value": 54.58,
+      "ground_truth": "above",
+      "model_answer": "above",
+      "correct": true
+    }
+  ]
+}
