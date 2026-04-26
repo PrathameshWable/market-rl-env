@@ -36,9 +36,13 @@ def _generate(prompt_text: str, *, max_new_tokens: int = 80, temperature: float 
               do_sample: bool = True) -> str:
     """Run one model.generate call and return decoded completion text."""
     inputs = tokenizer(prompt_text, return_tensors="pt").to("cuda")
+    # Qwen2.5 ships max_length=32768 in generation_config. Passing
+    # max_new_tokens *also* makes Transformers log a warning for every
+    # call. Use a single cap: max_length = prompt + completion budget.
+    pl = int(inputs["input_ids"].shape[1])
     out = model.generate(
         **inputs,
-        max_new_tokens=max_new_tokens,
+        max_length=pl + max_new_tokens,
         do_sample=do_sample,
         temperature=temperature,
         pad_token_id=tokenizer.eos_token_id,

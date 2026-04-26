@@ -1,0 +1,6 @@
+# Optional extras — only needed for the Streamlit demo dashboard.
+# The core training / eval pipeline does not depend on these.
+streamlit>=1.36,<2.0
+plotly>=5.20,<7.0
+pandas>=2.0,<3.0
+numpy>=1.26
