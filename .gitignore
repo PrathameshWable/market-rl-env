@@ -30,3 +30,4 @@ training/*.jsonl
 # Local Drive sync of training outputs — canonical copy lives in
 # training/runs/stage1_*/ (committed via git LFS).
 market-rl-stage1/
+market-rl-ablations/
